@@ -179,7 +179,7 @@ def handle_html_references(html_content, page_duplicate_file_names, page_file_ma
         if not 'alt' in img_element.attrib.keys():
             img_element.attrib['alt'] = relative_file_path
 
-    return html.tostring(html_tree)
+    return html.tostring(html_tree).decode('utf-8')
 
 
 def download_file(clean_url, download_folder, downloaded_file_name, depth=0, error_output=True):

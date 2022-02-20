@@ -47,3 +47,7 @@ Run confluence dumper::
 
  cd confluence_dumper
  python confluence_dumper.py
+
+==============
+VERSION: Python 3.6.5
+==============
