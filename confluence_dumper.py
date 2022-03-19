@@ -30,6 +30,12 @@ import settings
 CONFLUENCE_DUMPER_VERSION = '1.0.0'
 TITLE_OUTPUT = 'C O N F L U E N C E   D U M P E R  %s' % CONFLUENCE_DUMPER_VERSION
 
+GLOBAL_absolute_download_url = list()
+GLOBAL_downloaded_file_path = list()
+GLOBAL_auth = list()
+GLOBAL_headers = list()
+GLOBAL_verify_peer_certificate = list()
+GLOBAL_proxies = list()
 
 def error_print(*args, **kwargs):
     """ Wrapper for the print function which leads to stderr outputs.
@@ -198,17 +204,23 @@ def download_file(clean_url, download_folder, downloaded_file_name, depth=0, err
     if not os.path.exists(downloaded_file_path):
         absolute_download_url = '%s%s' % (settings.CONFLUENCE_BASE_URL, clean_url)
         print('%sDOWNLOAD: %s' % ('\t'*(depth+1), downloaded_file_name))
-        try:
-            utils.http_download_binary_file(absolute_download_url, downloaded_file_path,
-                                            auth=settings.HTTP_AUTHENTICATION, headers=settings.HTTP_CUSTOM_HEADERS,
-                                            verify_peer_certificate=settings.VERIFY_PEER_CERTIFICATE,
-                                            proxies=settings.HTTP_PROXIES)
+        GLOBAL_absolute_download_url.append(absolute_download_url)
+        GLOBAL_downloaded_file_path.append(downloaded_file_path)
+        GLOBAL_auth.append(settings.HTTP_AUTHENTICATION)
+        GLOBAL_headers.append(settings.HTTP_CUSTOM_HEADERS)
+        GLOBAL_verify_peer_certificate.append(settings.VERIFY_PEER_CERTIFICATE)
+        GLOBAL_proxies.append(settings.HTTP_PROXIES)
+        # try:
+        #     utils.http_download_binary_file(absolute_download_url, downloaded_file_path,
+        #                                     auth=settings.HTTP_AUTHENTICATION, headers=settings.HTTP_CUSTOM_HEADERS,
+        #                                     verify_peer_certificate=settings.VERIFY_PEER_CERTIFICATE,
+        #                                     proxies=settings.HTTP_PROXIES)
 
-        except utils.ConfluenceException as e:
-            if error_output:
-                error_print('%sERROR: %s' % ('\t'*(depth+2), e))
-            else:
-                print('%sWARNING: %s' % ('\t'*(depth+2), e))
+        # except utils.ConfluenceException as e:
+        #     if error_output:
+        #         error_print('%sERROR: %s' % ('\t'*(depth+2), e))
+        #     else:
+        #         print('%sWARNING: %s' % ('\t'*(depth+2), e))
 
     return downloaded_file_path
 
@@ -466,6 +478,9 @@ def main():
 
         # Create folders for this space
         space_folder_name = provide_unique_file_name(duplicate_space_names, space_matching, space, is_folder=True)
+        if space in settings.SPACES_TO_SKIP:
+            print(f"SKIP: {space}")
+            continue
         space_folder = '%s/%s' % (settings.EXPORT_FOLDER, space_folder_name)
         try:
             os.makedirs(space_folder)
@@ -507,6 +522,16 @@ def main():
 if __name__ == "__main__":
     try:
         main()
+        final_dict = {"GLOBAL_absolute_download_url": GLOBAL_absolute_download_url,
+            "GLOBAL_downloaded_file_path": GLOBAL_downloaded_file_path,
+            "GLOBAL_auth": GLOBAL_auth,
+            "GLOBAL_headers": GLOBAL_headers,
+            "GLOBAL_verify_peer_certificate": GLOBAL_verify_peer_certificate,
+            "GLOBAL_proxies": GLOBAL_proxies}
+        import pickle
+        f = open("file.pkl","wb")
+        pickle.dump(final_dict,f)
+        f.close()
     except KeyboardInterrupt:
         error_print('ERROR: Keyboard Interrupt.')
         sys.exit(1)
